@@ -168,7 +168,7 @@ while True:
         
         font = cv2.FONT_HERSHEY_DUPLEX
         name = "unknowN"
-        cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+        cv2.putText(frame, name + "x" +str(top)+" y" +str(right)+" w" + str(bottom)+ " h" +str(left),, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
     
     cv2.imshow('SMALL_FRAME', frame)
     #cv2.imshow('Video', frame)
