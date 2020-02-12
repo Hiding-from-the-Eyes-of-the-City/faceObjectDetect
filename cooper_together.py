@@ -155,6 +155,12 @@ while True:
                           (bounding_box[0]*4+bounding_box[2]*4, bounding_box[1]*4 + bounding_box[3]*4),
                           (255,255,0),
                           2)
+        start_x = left - (right - left)
+        end_x = right + (right-left)
+        start_y = bottom + int(.25*(bottom-top))
+        end_y = bottom + (bottom-top) + int(.25*(bottom-top))
+        cv2.rectangle(frame, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
+        
         cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 0), 2)
         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
         font = cv2.FONT_HERSHEY_DUPLEX
