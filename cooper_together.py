@@ -80,7 +80,7 @@ while True:
             confidence = confidences[i]
             color = colors[class_ids[i]]
             cv2.rectangle(frame,(x,y),(x+w,y+h),color,2)
-            cv2.putText(frame,label+" "+str(round(confidence,2)) + x+y+w+z,(x,y+30),font,1,(255,255,255),2)
+            cv2.putText(frame,label+" "+str(round(confidence,2)) + str(x)+str(y)+str(w)+str(z),(x,y+30),font,1,(255,255,255),2)
 
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_small_frame = small_frame[:, :, ::-1]
