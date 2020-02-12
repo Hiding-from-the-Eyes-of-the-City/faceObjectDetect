@@ -16,7 +16,9 @@ face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
-video_capture = 1
+video_capture = 0
+scale = 4
+
 # ==========================================<--YOLO-->=========================================================================
 # Load Yolo
 net = cv2.dnn.readNet("yolov3-tiny-obj_last.weights", "yolov3-tiny-obj.cfg")
@@ -40,7 +42,7 @@ while True:
     ret, frame = cap.read()
     # Resize frame of video to 1/4 size for faster face recognition processing
     # small_frame = frame
-    small_frame = cv2.resize(frame, (0, 0), fx=1, fy=1)
+    small_frame = cv2.resize(frame, (0, 0), fx=1/scale, fy=1/scale)
 
     height, width, channels = small_frame.shape
 
@@ -65,6 +67,7 @@ while True:
     class_ids = []
     confidences = []
     boxes = []
+    centers = []
 
 
     for out in yolo_outs:
@@ -75,29 +78,30 @@ while True:
             # if confidence > 0.3:  # object detected!
             # Setting YOLOv3 to only look for the sticker
             if (confidence > 0.3) and (classes[class_id] == "sticker"):
-                center_x = int(detection[0] * width)
-                center_y = int(detection[1] * height)
-                w = int(detection[2] * width)
-                h = int(detection[3] * height)
+                center_x = int(detection[0] * width)*scale
+                center_y = int(detection[1] * height)*scale
+                w = int(detection[2] * width)*scale
+                h = int(detection[3] * height)*scale
 
                 x = int(center_x - w / 2)
                 y = int(center_y - h / 2)
 
+                cv2.circle(frame, (center_x, center_y), 10, (255, 0, 0), 2)
                 boxes.append([x, y, w, h])
+                centers.append([center_x, center_y])
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.4, 0.6)
 
-    for i in range(len(boxes)):
-        if i in indexes:
-            x, y, w, h = boxes[i]
-            label = str(classes[class_ids[i]])
-            confidence = confidences[i]
-            color = colors[class_ids[i]]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            cv2.putText(frame, label + " " + str(round(confidence, 2)) + "x" + str(x) + " y" + str(y) + " w" + str(
-                w) + " h" + str(h), (x, y + 30), font, 1, (255, 255, 255), 2)
-
+    # for i in range(len(boxes)):
+    #     if i in indexes:
+    #         x, y, w, h = boxes[i]
+    #         label = str(classes[class_ids[i]])
+    #         confidence = confidences[i]
+    #         color = colors[class_ids[i]]
+    #         cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+    #         cv2.putText(frame, label + " " + str(round(confidence, 2)) + "x" + str(x) + " y" + str(y) + " w" + str(
+    #             w) + " h" + str(h), (x, y + 30), font, 1, (255, 255, 255), 2)
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_small_frame = small_frame[:, :, ::-1]
 
@@ -160,10 +164,25 @@ while True:
     process_this_frame = not process_this_frame
 
     for (top, right, bottom, left), name in zip(face_locations, face_names):
-        top *= 1
-        right *= 1
-        bottom *= 1
-        left *= 1
+        top *= scale
+        right *= scale
+        bottom *= scale
+        left *= scale
+
+        start_x = left - (right - left)
+        end_x = right + (right - left)
+        start_y = bottom + int(.25 * (bottom - top))
+        end_y = bottom + (bottom - top) + int(.25 * (bottom - top))
+
+        blur = False
+
+        for i in range(len(centers)):
+            x, y = centers[i]
+            # print(centers[i])
+            if( (left <x and x <right and top<y and y<bottom) or (start_x <x and x <end_x and start_y<y and y<end_y)):
+                name = "UnkowNNN"
+                blur = True
+
 
         bounding_box = result_mtcnn[0]['box']
 
@@ -173,22 +192,20 @@ while True:
                       (255, 255, 0),
                       2)
 
-        start_x = left - (right - left)
-        end_x = right + (right - left)
-        start_y = bottom + int(.25 * (bottom - top))
-        end_y = bottom + (bottom - top) + int(.25 * (bottom - top))
 
-        cv2.rectangle(frame, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
+
+        # cv2.rectangle(frame, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
 
         cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 0), 2)
-        # sub_face = frame[top:bottom, left:right]
-        # sub_face = cv2.GaussianBlur(sub_face, (23, 23), 100)
-        # frame[top:bottom, left:right] = sub_face
-        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+        if blur :
+            sub_face = frame[top:bottom, left:right]
+            sub_face = cv2.GaussianBlur(sub_face, (23, 23), 100)
+            frame[top:bottom, left:right] = sub_face
+        # cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
 
         font = cv2.FONT_HERSHEY_DUPLEX
         # name = "unknown"
-        cv2.putText(frame, name + "x" + str(top) + " y" + str(right) + " w" + str(bottom) + " h" + str(left),
+        cv2.putText(frame, name,
                     (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
     cv2.imshow('SMALL_FRAME', frame)
