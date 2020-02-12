@@ -80,7 +80,7 @@ while True:
             confidence = confidences[i]
             color = colors[class_ids[i]]
             cv2.rectangle(frame,(x,y),(x+w,y+h),color,2)
-            cv2.putText(frame,label+" "+str(round(confidence,2)),(x,y+30),font,1,(255,255,255),2)
+            cv2.putText(frame,label+" "+str(round(confidence,2)) + x+y+w+z,(x,y+30),font,1,(255,255,255),2)
 
     # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
     rgb_small_frame = small_frame[:, :, ::-1]
@@ -150,6 +150,7 @@ while True:
         left *= 1
         
         bounding_box = result_mtcnn[0]['box']
+        
         cv2.rectangle(frame,
                           (bounding_box[0]*4, bounding_box[1]*4),
                           (bounding_box[0]*4+bounding_box[2]*4, bounding_box[1]*4 + bounding_box[3]*4),
@@ -159,12 +160,16 @@ while True:
         end_x = right + (right-left)
         start_y = bottom + int(.25*(bottom-top))
         end_y = bottom + (bottom-top) + int(.25*(bottom-top))
+        
         cv2.rectangle(frame, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
         
         cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 0), 2)
         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+        
         font = cv2.FONT_HERSHEY_DUPLEX
+        name = "unknowN"
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+    
     cv2.imshow('SMALL_FRAME', frame)
     #cv2.imshow('Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
